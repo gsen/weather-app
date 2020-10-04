@@ -6,8 +6,11 @@ body{
     background-color: #293251;
 }
 .main-container{
+    overflow: hidden;
+    height: 100vh;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 .container{
     width: 300px;    

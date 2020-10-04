@@ -11,7 +11,7 @@ const cord = {};
 
 
 // APP CONSTS AND VARS
-const BASE_URL = 'http://api.openweathermap.org/data/2.5/weather';
+const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 const KELVIN = 273;
 // API KEY
 const key = "8d71755b68a278278ef9ec912a46e649";
@@ -22,6 +22,9 @@ if ('geolocation' in navigator) {
 } else {
     notificationElement.style.display = "block";
     notificationElement.innerHTML = "<p>Browser doesn't Support Geolocation</p>";
+    getAllWeather(false).then((weatherData) => {
+        displayWeather(weatherData);
+    })
 }
 
 // SET USER'S POSITION
@@ -31,8 +34,6 @@ function setPosition(position) {
     getAllWeather().then((weatherData) => {
         displayWeather(weatherData);
     })
-
-    console.log('here');
 }
 
 
@@ -44,15 +45,18 @@ function showError(error) {
 }
 
 // GET WEATHER FROM API PROVIDER
-function getAllWeather() {
+function getAllWeather(location = true) {
 
-    // const currentWeatherApi = `${BASE_URL}?lat=${cord.latitude}&lon=${cord.longitude}&appid=${key}`;
+    const currentWeatherApi = `${BASE_URL}?lat=${cord.latitude}&lon=${cord.longitude}&appid=${key}`;
 
-    // const currentWeather = getWeather(currentWeatherApi);
-    const tokyoWeather = getWeather(`${BASE_URL}?q=tokyo&appid=${key}&lang=ja`);
+    const currentWeather = getWeather(currentWeatherApi);
+    const tokyoWeather = getWeather(`${BASE_URL}?q=tokyo&appid=${key}`);
     const londonWeather = getWeather(`${BASE_URL}?q=london&appid=${key}`);
-    // return Promise.all([currentWeather, tokyoWeather, londonWeather]).then(values => values)
-    return Promise.all([tokyoWeather, londonWeather]).then(values => values)
+    const weatherPromises = [currentWeather, tokyoWeather, londonWeather];
+    if(!location){
+        weatherPromises.splice(0,1);
+    }
+    return Promise.all(weatherPromises).then(values => values);
 }
 
 const getWeather = (url) => fetch(url).then(resp => resp.json())
