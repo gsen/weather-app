@@ -5,16 +5,16 @@
 body{
     background-color: #293251;
 }
-
+.main-container{
+    display: flex;
+    justify-content: center;
+}
 .container{
     width: 300px;    
-    background-color: #FFF;
-    
-    display: block;
-    margin: 0 auto;
-    
+    background-color: #FFF;    
     border-radius: 10px;
     padding-bottom : 50px;
+    margin: 8px;
 }
 
 .app-title{

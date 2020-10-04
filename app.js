@@ -7,86 +7,106 @@ const locationElement = document.querySelector(".location p");
 const notificationElement = document.querySelector(".notification");
 
 // App data
-const weather = {};
+const cord = {};
 
-weather.temperature = {
-    unit : "celsius"
-}
 
 // APP CONSTS AND VARS
+const BASE_URL = 'http://api.openweathermap.org/data/2.5/weather';
 const KELVIN = 273;
 // API KEY
 const key = "8d71755b68a278278ef9ec912a46e649";
 
 // CHECK IF BROWSER SUPPORTS GEOLOCATION
-if('geolocation' in navigator){
+if ('geolocation' in navigator) {
     navigator.geolocation.getCurrentPosition(setPosition, showError);
-}else{
+} else {
     notificationElement.style.display = "block";
     notificationElement.innerHTML = "<p>Browser doesn't Support Geolocation</p>";
 }
 
 // SET USER'S POSITION
-function setPosition(position){
-    let latitude = position.coords.latitude;
-    let longitude = position.coords.longitude;
-    
-    getWeather(latitude, longitude);
+function setPosition(position) {
+    cord.latitude = position.coords.latitude;
+    cord.longitude = position.coords.longitude;
+    getAllWeather().then((weatherData) => {
+        displayWeather(weatherData);
+    })
+
+    console.log('here');
 }
 
+
+
 // SHOW ERROR WHEN THERE IS AN ISSUE WITH GEOLOCATION SERVICE
-function showError(error){
+function showError(error) {
     notificationElement.style.display = "block";
     notificationElement.innerHTML = `<p> ${error.message} </p>`;
 }
 
 // GET WEATHER FROM API PROVIDER
-function getWeather(latitude, longitude){
-    let api = `http://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${key}`;
-    
-    fetch(api)
-        .then(function(response){
-            let data = response.json();
-            return data;
-        })
-        .then(function(data){
-            weather.temperature.value = Math.floor(data.main.temp - KELVIN);
-            weather.description = data.weather[0].description;
-            weather.iconId = data.weather[0].icon;
-            weather.city = data.name;
-            weather.country = data.sys.country;
-        })
-        .then(function(){
-            displayWeather();
-        });
+function getAllWeather() {
+
+    // const currentWeatherApi = `${BASE_URL}?lat=${cord.latitude}&lon=${cord.longitude}&appid=${key}`;
+
+    // const currentWeather = getWeather(currentWeatherApi);
+    const tokyoWeather = getWeather(`${BASE_URL}?q=tokyo&appid=${key}&lang=ja`);
+    const londonWeather = getWeather(`${BASE_URL}?q=london&appid=${key}`);
+    // return Promise.all([currentWeather, tokyoWeather, londonWeather]).then(values => values)
+    return Promise.all([tokyoWeather, londonWeather]).then(values => values)
 }
 
+const getWeather = (url) => fetch(url).then(resp => resp.json())
+
 // DISPLAY WEATHER TO UI
-function displayWeather(){
-    iconElement.innerHTML = `<img src="icons/${weather.iconId}.png"/>`;
-    tempElement.innerHTML = `${weather.temperature.value}°<span>C</span>`;
-    descElement.innerHTML = weather.description;
-    locationElement.innerHTML = `${weather.city}, ${weather.country}`;
+function displayWeather(weatherData) {
+    let weatherInfo = ''
+    for (const weather of weatherData) {
+        weatherInfo +=
+            `
+            <div class="container">
+                <div class="app-title">
+                <p>${weather.name}</p>
+            </div>
+            <div class="notification"> </div>
+            <div class="weather-container">
+                <div class="weather-icon">
+                    <img src="icons/${weather.weather[0].icon}.png" alt="">
+                </div>
+                <div class="temperature-value">
+                    <p data="${weather.main.temp}" onclick="onTempratureClick(this)">${Math.floor(weather.main.temp - KELVIN)}°<span >C</span></p>
+                </div>
+                <div class="temperature-description">
+                    <p> ${weather.weather[0].description} </p>
+                </div>
+                <div class="location">
+                    <p>${weather.name}, ${weather.sys.country}</p>
+                </div>
+            </div>
+        </div>`
+    }
+
+    document.querySelector('.main-container').innerHTML = weatherInfo;
 }
 
 // C to F conversion
-function celsiusToFahrenheit(temperature){
-    return (temperature * 9/5) + 32;
+function celsiusToFahrenheit(temperature) {
+    return (temperature * 9 / 5) + 32;
 }
 
 // WHEN THE USER CLICKS ON THE TEMPERATURE ELEMENET
-tempElement.addEventListener("click", function(){
-    if(weather.temperature.value === undefined) return;
-    
-    if(weather.temperature.unit == "celsius"){
-        let fahrenheit = celsiusToFahrenheit(weather.temperature.value);
-        fahrenheit = Math.floor(fahrenheit);
-        
-        tempElement.innerHTML = `${fahrenheit}°<span>F</span>`;
-        weather.temperature.unit = "fahrenheit";
-    }else{
-        tempElement.innerHTML = `${weather.temperature.value}°<span>C</span>`;
-        weather.temperature.unit = "celsius"
+function onTempratureClick(element) {
+    console.log(element);
+    if (element && element.innerText) {
+        const text = element.innerText;
+        const splitData = text.split('°');
+        if (splitData[1] === 'C') {
+            let fahrenheit = celsiusToFahrenheit(splitData[0]);
+            fahrenheit = Math.floor(fahrenheit);
+            element.innerHTML = `${fahrenheit}°<span>F</span>`;
+
+        } else {
+            element.innerHTML = `${Math.floor(element.getAttribute('data') - KELVIN)}°<span>C</span>`;
+        }
     }
-});
+};
 
